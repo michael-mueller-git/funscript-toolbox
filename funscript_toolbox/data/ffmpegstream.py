@@ -2,6 +2,7 @@
 
 import cv2
 import os
+import logging
 import time
 import platform
 
@@ -11,7 +12,7 @@ from queue import Queue
 
 import subprocess as sp
 import numpy as np
-from utils.watchdog import Watchdog
+from funscript_toolbox.utils.watchdog import Watchdog
 
 
 @dataclass
