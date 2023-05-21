@@ -772,6 +772,7 @@ class OpenCV_GUI(KeypressHandler):
             current_frame_number: int = 0,
             texte: list = [],
             boxes: list = [],
+            points: list = [],
             wait: int = 1,
             show_fps: bool = True,
             show_time: bool = True
@@ -801,5 +802,7 @@ class OpenCV_GUI(KeypressHandler):
         self.print_text(texte)
         for boxes_item in boxes:
             self.draw_box(boxes_item, connect=True)
+        for point_item in points:
+            self.preview_image = self.draw_point_to_image(self.preview_image, point_item)
 
         return self.show(wait)

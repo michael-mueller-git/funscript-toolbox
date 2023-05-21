@@ -2,8 +2,11 @@ import os
 import json
 import copy
 import sys
+import time
 import logging
 import argparse
+
+import numpy as np
 
 from funscript_toolbox.data.ffmpegstream import FFmpegStream
 from funscript_toolbox.ui.opencvui import OpenCV_GUI, OpenCV_GUI_Parameters
@@ -121,6 +124,67 @@ class PositionAnnotation:
 
         ffmpeg.stop()
 
+        point_distances = np.array([np.sqrt(np.sum((np.array(item[0][4:]) - np.array(item[1][4:])) ** 2, axis=0)) \
+                for item in tracking_result])
+
+        max_distance_frame_number = np.argmax(np.array([abs(x) for x in point_distances]))
+        dick_pos = self.get_dick_pos(max_distance_frame_number)
+        offset = (np.array(tracking_result[max_distance_frame_number][0][4:]) - dick_pos['top'], np.array(tracking_result[max_distance_frame_number][1][4:]) - dick_pos['bottom'])
+
+        real_positions = [ [np.array(tracking_result[i][0][4:]) - offset[0], np.array(tracking_result[i][1][4:]) - offset[1]] for i in range(len(tracking_result)) ]
+        self.preview(real_positions)
+
+
+    def preview(self, points):
+        ffmpeg = FFmpegStream(
+                video_path = self.video_file,
+                config = self.annotation["ffmpeg"],
+                skip_frames = 0,
+                start_frame = 0
+            )
+
+        frame_number = 0
+        while ffmpeg.isOpen() and not self.stop:
+            frame = ffmpeg.read()
+            if frame_number >= len(points):
+                break
+
+            key = self.ui.preview(
+                    frame,
+                    frame_number,
+                    texte = ["Press 'q' to stop preview"],
+                    points = points[frame_number]
+                )
+
+            time.sleep(0.1)
+
+            frame_number += 1
+            if self.ui.was_key_pressed('q') or key == ord('q'):
+                break
+
+        ffmpeg.stop()
+
+
+    def get_dick_pos(self, max_distance_frame_number: int) -> dict:
+        """ Get Start and End points of the dick
+
+        Args:
+            max_distance_frame_number (int): absolute frame number with max tracker distance
+
+        Returns:
+            dict: dick points
+        """
+        max_distance_frame = FFmpegStream.get_frame(self.video_file, max_distance_frame_number)
+        max_distance_frame = FFmpegStream.get_projection(max_distance_frame, self.annotation["ffmpeg"])
+        center_line = self.ui.line_selector(max_distance_frame, "draw line on center of dick")
+
+        dick_pos = { 'top': np.array(center_line[1]), 'bottom': np.array(center_line[0]) } \
+                if center_line[0][1] > center_line[1][1] \
+                else { 'top': np.array(center_line[0]), 'bottom': np.array(center_line[1]) }
+
+        return dick_pos
+
+
 
 def setup_logging():
     logging.basicConfig(
@@ -130,6 +194,7 @@ def setup_logging():
             logging.StreamHandler(stream=sys.stdout)
         ]
     )
+
 
 def position_anotation_tool_entrypoint():
     parser = argparse.ArgumentParser()
