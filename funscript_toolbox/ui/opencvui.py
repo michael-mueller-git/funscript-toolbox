@@ -802,7 +802,7 @@ class OpenCV_GUI(KeypressHandler):
         self.print_text(texte)
         for boxes_item in boxes:
             self.draw_box(boxes_item, connect=True)
-        for point_item in points:
-            self.preview_image = self.draw_point_to_image(self.preview_image, point_item)
+        if len(points) > 0:
+            self.preview_image = self.draw_point_to_image(self.preview_image, points)
 
         return self.show(wait)

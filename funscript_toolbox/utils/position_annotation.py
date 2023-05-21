@@ -16,9 +16,9 @@ class PositionAnnotation:
 
     def __init__(self, args):
         self.logger = logging.getLogger(__name__)
-        self.video_file = args.input
+        self.video_file = os.path.abspath(args.input)
         self.video_info = FFmpegStream.get_video_info(args.input)
-        self.annotation_file = ''.join(args.input.split('.')[:-1])
+        self.annotation_file = ''.join(self.video_file.split('.')[:-1]) + ".json"
         self.load_annotation_file()
         self.stop = False
         self.ui = OpenCV_GUI(OpenCV_GUI_Parameters(
@@ -30,7 +30,7 @@ class PositionAnnotation:
 
     def load_annotation_file(self):
         if not os.path.exists(self.annotation_file):
-            self.logger.info("Annotation file not exists")
+            self.logger.info("Annotation file %s not exists", self.annotation_file)
             self.annotation = {
                 'file': os.path.basename(self.video_file),
                 'metadata': {
@@ -40,7 +40,7 @@ class PositionAnnotation:
                     'length': self.video_info.length
                 },
                 "ffmpeg": "",
-                'positons': {}
+                'points': {}
             }
             return
 
@@ -50,6 +50,7 @@ class PositionAnnotation:
 
 
     def save_annotation(self):
+        self.logger.info("save annotation to %s", self.annotation_file)
         with open(self.annotation_file, "w") as f:
             json.dump(self.annotation, f, indent=4)
 
@@ -88,6 +89,12 @@ class PositionAnnotation:
 
 
     def start(self):
+        if len (self.annotation["points"]) > 0:
+            self.logger.info("preview existing labels")
+            self.preview()
+            return
+
+        self.logger.info("annotation not found, start annotation generator")
         first_frame = FFmpegStream.get_frame(self.video_file, 0)
         self.annotation["ffmpeg"] = self.ui.get_video_projection_config(first_frame, "vr_he_180_sbs")
 
@@ -131,11 +138,13 @@ class PositionAnnotation:
         dick_pos = self.get_dick_pos(max_distance_frame_number)
         offset = (np.array(tracking_result[max_distance_frame_number][0][4:]) - dick_pos['top'], np.array(tracking_result[max_distance_frame_number][1][4:]) - dick_pos['bottom'])
 
-        real_positions = [ [np.array(tracking_result[i][0][4:]) - offset[0], np.array(tracking_result[i][1][4:]) - offset[1]] for i in range(len(tracking_result)) ]
-        self.preview(real_positions)
+        real_positions = [ [(np.array(tracking_result[i][0][4:]) - offset[0]).tolist(), (np.array(tracking_result[i][1][4:]) - offset[1]).tolist()] for i in range(len(tracking_result)) ]
+        self.annotation["points"] = real_positions
+        self.preview()
+        self.save_annotation()
 
 
-    def preview(self, points):
+    def preview(self):
         ffmpeg = FFmpegStream(
                 video_path = self.video_file,
                 config = self.annotation["ffmpeg"],
@@ -146,17 +155,17 @@ class PositionAnnotation:
         frame_number = 0
         while ffmpeg.isOpen() and not self.stop:
             frame = ffmpeg.read()
-            if frame_number >= len(points):
+            if frame_number >= len(self.annotation["points"]):
                 break
 
             key = self.ui.preview(
                     frame,
                     frame_number,
                     texte = ["Press 'q' to stop preview"],
-                    points = points[frame_number]
+                    points = self.annotation["points"][frame_number]
                 )
 
-            time.sleep(0.1)
+            time.sleep(0.05)
 
             frame_number += 1
             if self.ui.was_key_pressed('q') or key == ord('q'):
