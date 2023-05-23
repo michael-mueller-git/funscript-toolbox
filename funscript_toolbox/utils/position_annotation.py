@@ -10,7 +10,7 @@ import numpy as np
 
 from funscript_toolbox.data.ffmpegstream import FFmpegStream
 from funscript_toolbox.ui.opencvui import OpenCV_GUI, OpenCV_GUI_Parameters
-from funscript_toolbox.algorithms.videotracker import StaticVideoTracker
+from funscript_toolbox.algorithms.videotracker import StaticVideoTracker, NoVideoTracker
 
 class PositionAnnotation:
 
@@ -56,6 +56,8 @@ class PositionAnnotation:
 
 
     def get_tracker(self, first_frame):
+        selection = self.ui.menu(["1 Point", "2 Points"])
+
         preview_frame = copy.deepcopy(first_frame)
         bbox_top = self.ui.bbox_selector(
                 preview_frame,
@@ -67,6 +69,7 @@ class PositionAnnotation:
                 bbox_top,
                 color=(255,0,255)
             )
+
         bbox_bottom = self.ui.bbox_selector(
                 preview_frame,
                 "Select Bottom Tracking Feature",
@@ -79,11 +82,14 @@ class PositionAnnotation:
                         self.video_info.fps
                     )
 
-        tracker_bottom = StaticVideoTracker(
-                        first_frame,
-                        bbox_bottom,
-                        self.video_info.fps
-                    )
+        if selection == 2:
+            tracker_bottom = StaticVideoTracker(
+                            first_frame,
+                            bbox_bottom,
+                            self.video_info.fps
+                        )
+        else:
+            tracker_bottom = NoVideoTracker(bbox_bottom)
 
         return tracker_top, tracker_bottom
 
@@ -131,14 +137,20 @@ class PositionAnnotation:
 
         ffmpeg.stop()
 
-        point_distances = np.array([np.sqrt(np.sum((np.array(item[0][4:]) - np.array(item[1][4:])) ** 2, axis=0)) \
-                for item in tracking_result])
+        selection = self.ui.menu(["Apply Offset", "No Offset"])
 
-        max_distance_frame_number = np.argmax(np.array([abs(x) for x in point_distances]))
-        dick_pos = self.get_dick_pos(max_distance_frame_number)
-        offset = (np.array(tracking_result[max_distance_frame_number][0][4:]) - dick_pos['top'], np.array(tracking_result[max_distance_frame_number][1][4:]) - dick_pos['bottom'])
+        if selection == 1:
+            point_distances = np.array([np.sqrt(np.sum((np.array(item[0][4:]) - np.array(item[1][4:])) ** 2, axis=0)) \
+                    for item in tracking_result])
 
-        real_positions = [ [(np.array(tracking_result[i][0][4:]) - offset[0]).tolist(), (np.array(tracking_result[i][1][4:]) - offset[1]).tolist()] for i in range(len(tracking_result)) ]
+            max_distance_frame_number = np.argmax(np.array([abs(x) for x in point_distances]))
+            dick_pos = self.get_dick_pos(max_distance_frame_number)
+            offset = (np.array(tracking_result[max_distance_frame_number][0][4:]) - dick_pos['top'], np.array(tracking_result[max_distance_frame_number][1][4:]) - dick_pos['bottom'])
+
+            real_positions = [ [(np.array(tracking_result[i][0][4:]) - offset[0]).tolist(), (np.array(tracking_result[i][1][4:]) - offset[1]).tolist()] for i in range(len(tracking_result)) ]
+        else:
+            real_positions = [ [(np.array(tracking_result[i][0][4:])).tolist(), (np.array(tracking_result[i][1][4:])).tolist()] for i in range(len(tracking_result)) ]
+
         self.annotation["points"] = real_positions
         self.preview()
         self.save_annotation()

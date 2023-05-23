@@ -806,3 +806,31 @@ class OpenCV_GUI(KeypressHandler):
             self.preview_image = self.draw_point_to_image(self.preview_image, points)
 
         return self.show(wait)
+
+
+    def menu(self,
+            menu_items: list) -> int:
+
+        """ Show menu and get selection
+
+        Args:
+            menu_items (list): Menu items to display
+
+        Returns:
+            int selected menu entry
+        """
+        if self.preview_image_without_scale is not None:
+            self.set_background_image(np.full(self.preview_image_without_scale.shape, 0, dtype=np.uint8))
+        else:
+            self.set_background_image(np.full((512,512,3), 0, dtype=np.uint8))
+        self.print_text("Type number to select menu entry:", color=(0,0,255))
+        for idx, item in enumerate(menu_items):
+            self.print_text("[" + str(idx+1) + "] " + item, color=(0,0,255))
+
+        ret = 0
+        while True:
+            ret = self.show()
+            if ret in [ord(str(x)) for x in range(1,len(menu_items)+1)]:
+                break
+
+        return int(chr(ret))

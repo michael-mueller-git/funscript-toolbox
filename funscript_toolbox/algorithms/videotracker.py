@@ -22,6 +22,19 @@ class StaticVideoTrackerParameter:
     tracking_algorithm: str = "CSRT"
 
 
+class NoVideoTracker:
+    """ Fake api for no tracking """
+    def __init__(self, tracking_bbox: tuple):
+        self.tracking_bbox = tracking_bbox
+
+    def update(self, _frame):
+        pass
+
+    def result(self):
+        return "OK", self.tracking_bbox
+
+
+
 class StaticVideoTracker:
     """
     Video tracker for static feature tracking. We assume that the tracked feature is always in
