@@ -137,19 +137,27 @@ class PositionAnnotation:
 
         ffmpeg.stop()
 
-        selection = self.ui.menu(["Apply Offset", "No Offset"])
-
-        if selection == 1:
-            point_distances = np.array([np.sqrt(np.sum((np.array(item[0][4:]) - np.array(item[1][4:])) ** 2, axis=0)) \
+        point_distances = np.array([np.sqrt(np.sum((np.array(item[0][4:]) - np.array(item[1][4:])) ** 2, axis=0)) \
                     for item in tracking_result])
 
-            max_distance_frame_number = np.argmax(np.array([abs(x) for x in point_distances]))
+        max_distance_frame_number = np.argmax(np.array([abs(x) for x in point_distances]))
+
+        selection = self.ui.menu(["Apply Offset by Dick Points", "Apply manual offset", "No Offset", "Discard"])
+
+        if selection == 1:
             dick_pos = self.get_dick_pos(max_distance_frame_number)
             offset = (np.array(tracking_result[max_distance_frame_number][0][4:]) - dick_pos['top'], np.array(tracking_result[max_distance_frame_number][1][4:]) - dick_pos['bottom'])
-
             real_positions = [ [(np.array(tracking_result[i][0][4:]) - offset[0]).tolist(), (np.array(tracking_result[i][1][4:]) - offset[1]).tolist()] for i in range(len(tracking_result)) ]
-        else:
+        elif selection == 2:
+            preview_frame = FFmpegStream.get_frame(self.video_file, max_distance_frame_number)
+            preview_frame = FFmpegStream.get_projection(preview_frame, self.annotation["ffmpeg"])
+            offset = [self.ui.get_point_offset(preview_frame, tracking_result[max_distance_frame_number][0][4:]), self.ui.get_point_offset(preview_frame, tracking_result[max_distance_frame_number][1][4:])]
+            real_positions = [ [(np.array(tracking_result[i][0][4:]) - offset[0]).tolist(), (np.array(tracking_result[i][1][4:]) - offset[1]).tolist()] for i in range(len(tracking_result)) ]
+        elif selection == 3:
             real_positions = [ [(np.array(tracking_result[i][0][4:])).tolist(), (np.array(tracking_result[i][1][4:])).tolist()] for i in range(len(tracking_result)) ]
+        else:
+            self.logger.warning("Discard new labels")
+            return
 
         self.annotation["points"] = real_positions
         self.preview()

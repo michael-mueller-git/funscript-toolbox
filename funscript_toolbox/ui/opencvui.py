@@ -2,6 +2,7 @@ import cv2
 import os
 import copy
 import yaml
+import time
 import logging
 import pynput.keyboard
 
@@ -834,3 +835,53 @@ class OpenCV_GUI(KeypressHandler):
                 break
 
         return int(chr(ret))
+
+
+    def get_point_offset(self, frame, start_point) -> tuple:
+        """ Get an offset value for an start point by user input
+
+        Args:
+            frame (np.ndarray): frame
+            start_point (tuple): start point
+
+        Returns:
+            tuple: offset in (x,y)
+        """
+        parameter_changed= True
+        new_position = copy.deepcopy(start_point)
+        accept = False
+        self.clear_keypress_queue()
+        time.sleep(0.1)
+        while not accept:
+            if parameter_changed:
+                parameter_changed = False
+                preview = copy.deepcopy(frame)
+                preview = self.draw_point_to_image(preview, new_position)
+                self.set_background_image(preview)
+                self.print_text("Press space to confirm", color=(0,0,255))
+
+            ret = self.show()
+            if ret in [ord(' '), 13]:
+                break
+
+            while self.keypress_queue.qsize() > 0:
+                pressed_key = '{0}'.format(self.keypress_queue.get())
+                if pressed_key == "Key.space" or pressed_key == "Key.enter":
+                    accept = True
+                    break
+
+                if pressed_key == "'w'":
+                    parameter_changed = True
+                    new_position = (new_position[0], new_position[1]-5)
+                elif pressed_key == "'a'":
+                    parameter_changed = True
+                    new_position = (new_position[0]-5, new_position[1])
+                elif pressed_key == "'s'":
+                    parameter_changed = True
+                    new_position = (new_position[0], new_position[1]+5)
+                elif pressed_key == "'d'":
+                    parameter_changed = True
+                    new_position = (new_position[0]+5, new_position[1])
+
+        return (start_point[0] - new_position[0], start_point[1] - new_position[1])
+
