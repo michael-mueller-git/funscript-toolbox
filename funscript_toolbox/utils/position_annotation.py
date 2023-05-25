@@ -159,6 +159,12 @@ class PositionAnnotation:
             self.logger.warning("Discard new labels")
             return
 
+        selection = self.ui.menu(["Apply Y Correction", "No Correction"])
+        if selection == 1:
+            for idx in range(len(real_positions)):
+                if real_positions[idx][0][1] > real_positions[idx][1][1]:
+                    real_positions[idx][1][1] = real_positions[idx][0][1]
+
         self.annotation["points"] = real_positions
         self.preview()
         self.save_annotation()
