@@ -40,7 +40,8 @@ class PositionAnnotation:
                     'length': self.video_info.length
                 },
                 "ffmpeg": "",
-                'points': {}
+                'keypoints': [],
+                'bboxes': []
             }
             return
 
@@ -95,7 +96,7 @@ class PositionAnnotation:
 
 
     def start(self):
-        if len (self.annotation["points"]) > 0:
+        if len (self.annotation["keypoints"]) > 0:
             self.logger.info("preview existing labels")
             self.preview()
             return
@@ -165,9 +166,15 @@ class PositionAnnotation:
                 if real_positions[idx][0][1] > real_positions[idx][1][1]:
                     real_positions[idx][1][1] = real_positions[idx][0][1]
 
-        self.annotation["points"] = real_positions
-        self.preview()
+        dick_len = abs(point_distances[max_distance_frame_number])
+        approx_dick_thick = round(0.12 * dick_len + 1)
+
+        bboxes =  [[[min((x[0][0], x[1][0]))-approx_dick_thick, min((x[0][1], x[1][1]))-8, max((x[0][0], x[1][0]))+approx_dick_thick, max((x[0][1], x[1][1]))+8]] for x in real_positions]
+
+        self.annotation["bboxes"] = bboxes
+        self.annotation["keypoints"] = [[[x[0][0], x[0][1], 1], [x[1][0], x[1][1], 1]] for x in real_positions]
         self.save_annotation()
+        self.preview()
 
 
     def preview(self):
@@ -181,17 +188,20 @@ class PositionAnnotation:
         frame_number = 0
         while ffmpeg.isOpen() and not self.stop:
             frame = ffmpeg.read()
-            if frame_number >= len(self.annotation["points"]):
+            if frame_number >= len(self.annotation["keypoints"]):
                 break
+
+            boxes = [(box[0], box[1], box[2]-box[0], box[3]-box[1]) for box in self.annotation["bboxes"][frame_number]]
 
             key = self.ui.preview(
                     frame,
                     frame_number,
                     texte = ["Press 'q' to stop preview"],
-                    points = self.annotation["points"][frame_number]
+                    boxes = boxes,
+                    points = self.annotation["keypoints"][frame_number]
                 )
 
-            time.sleep(0.05)
+            time.sleep(0.01)
 
             frame_number += 1
             if self.ui.was_key_pressed('q') or key == ord('q'):
