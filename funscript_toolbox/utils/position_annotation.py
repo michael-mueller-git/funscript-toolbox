@@ -1,4 +1,5 @@
 import os
+import cv2
 import json
 import copy
 import sys
@@ -166,7 +167,7 @@ class PositionAnnotation:
                 if real_positions[idx][0][1] > real_positions[idx][1][1]:
                     real_positions[idx][1][1] = real_positions[idx][0][1]
 
-        dick_len = abs(point_distances[max_distance_frame_number])
+        dick_len = max((abs(point_distances[max_distance_frame_number]), 12))
         approx_dick_thick = round(0.12 * dick_len + 1)
 
         bboxes =  [[[min((x[0][0], x[1][0]))-approx_dick_thick, min((x[0][1], x[1][1]))-8, max((x[0][0], x[1][0]))+approx_dick_thick, max((x[0][1], x[1][1]))+8]] for x in real_positions]
@@ -174,6 +175,7 @@ class PositionAnnotation:
         self.annotation["bboxes"] = bboxes
         self.annotation["keypoints"] = [[[x[0][0], x[0][1], 1], [x[1][0], x[1][1], 1]] for x in real_positions]
         self.save_annotation()
+        self.export("data/images", "data/annotations")
         self.preview()
 
 
@@ -206,6 +208,37 @@ class PositionAnnotation:
             frame_number += 1
             if self.ui.was_key_pressed('q') or key == ord('q'):
                 break
+
+        ffmpeg.stop()
+
+
+    def export(self, images_out_path: str, annotation_out_path: str):
+        os.makedirs(images_out_path, exist_ok=True)
+        os.makedirs(annotation_out_path, exist_ok=True)
+        filename_prefix = '.'.join(os.path.basename(self.video_file).split('.')[:-1])
+
+        ffmpeg = FFmpegStream(
+                video_path = self.video_file,
+                config = self.annotation["ffmpeg"],
+                skip_frames = 0,
+                start_frame = 0
+            )
+
+        frame_number = 0
+        while ffmpeg.isOpen() and not self.stop:
+            frame = ffmpeg.read()
+            if frame_number >= len(self.annotation["keypoints"]):
+                break
+
+            name = filename_prefix + "_" + str(frame_number).zfill(8)
+            print("export", name)
+            with open(os.path.join(annotation_out_path, name + ".json"), "w") as f:
+                json.dump({"bboxes": self.annotation["bboxes"][frame_number], "keypoints": [self.annotation["keypoints"][frame_number]]}, f)
+
+            cv2.imwrite(os.path.join(images_out_path, name + ".jpg"), frame)
+
+            frame_number += 1
+
 
         ffmpeg.stop()
 
