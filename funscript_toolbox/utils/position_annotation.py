@@ -188,7 +188,7 @@ class PositionAnnotation:
             )
 
         frame_number = 0
-        while ffmpeg.isOpen() and not self.stop:
+        while ffmpeg.isOpen():
             frame = ffmpeg.read()
             if frame_number >= len(self.annotation["keypoints"]):
                 break
@@ -225,7 +225,7 @@ class PositionAnnotation:
             )
 
         frame_number = 0
-        while ffmpeg.isOpen() and not self.stop:
+        while ffmpeg.isOpen():
             frame = ffmpeg.read()
             if frame_number >= len(self.annotation["keypoints"]):
                 break
