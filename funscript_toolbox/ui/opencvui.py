@@ -863,11 +863,13 @@ class OpenCV_GUI(KeypressHandler):
 
             ret = self.show()
             if ret in [ord(' '), 13]:
+                print("accept #1")
                 break
 
             while self.keypress_queue.qsize() > 0:
                 pressed_key = '{0}'.format(self.keypress_queue.get())
                 if pressed_key == "Key.space" or pressed_key == "Key.enter":
+                    print("accept #2")
                     accept = True
                     break
 
@@ -918,6 +920,7 @@ class OpenCV_GUI(KeypressHandler):
 
             ret = self.show()
             if ret in [ord(' '), 13]:
+                print("accept #1")
                 point += 1
                 parameter_changed = True
                 self.clear_keypress_queue()
@@ -929,6 +932,7 @@ class OpenCV_GUI(KeypressHandler):
             while self.keypress_queue.qsize() > 0:
                 pressed_key = '{0}'.format(self.keypress_queue.get())
                 if pressed_key == "Key.space" or pressed_key == "Key.enter":
+                    print("accept #2")
                     point += 1
                     parameter_changed = True
                     self.clear_keypress_queue()

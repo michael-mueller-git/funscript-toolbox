@@ -192,16 +192,17 @@ class PositionAnnotation:
         point_distances = [float(np.sqrt(np.sum((np.array(item[0]) - np.array(item[1])) ** 2, axis=0))) \
                     for item in real_positions]
 
+        self.annotation["bboxes"] = bboxes
+        self.annotation["keypoints"] = [[[x[0][0], x[0][1], 1], [x[1][0], x[1][1], 1]] for x in real_positions]
+        self.annotation["distances"] = point_distances
+        self.preview()
+
         selection = self.ui.menu(["Save and Export", "Exit"])
         if selection == 2:
             return
 
-        self.annotation["bboxes"] = bboxes
-        self.annotation["keypoints"] = [[[x[0][0], x[0][1], 1], [x[1][0], x[1][1], 1]] for x in real_positions]
-        self.annotation["distances"] = point_distances
         self.save_annotation()
         self.export("data")
-        self.preview()
 
 
     def preview(self):
