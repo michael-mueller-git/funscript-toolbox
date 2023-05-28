@@ -42,7 +42,8 @@ class PositionAnnotation:
                 },
                 "ffmpeg": "",
                 'keypoints': [],
-                'bboxes': []
+                'bboxes': [],
+                'distances': []
             }
             return
 
@@ -99,7 +100,7 @@ class PositionAnnotation:
     def start(self):
         if len (self.annotation["keypoints"]) > 0:
             self.logger.info("preview existing labels")
-            self.preview()
+            # self.preview()
             return
 
         self.logger.info("annotation not found, start annotation generator")
@@ -188,10 +189,18 @@ class PositionAnnotation:
             max((x[0][1], x[1][1])) + 8 + rectangle_offset[3]
             ]] for x in real_positions]
 
+        point_distances = [float(np.sqrt(np.sum((np.array(item[0]) - np.array(item[1])) ** 2, axis=0))) \
+                    for item in real_positions]
+
+        selection = self.ui.menu(["Save and Export", "Exit"])
+        if selection == 2:
+            return
+
         self.annotation["bboxes"] = bboxes
         self.annotation["keypoints"] = [[[x[0][0], x[0][1], 1], [x[1][0], x[1][1], 1]] for x in real_positions]
+        self.annotation["distances"] = point_distances
         self.save_annotation()
-        self.export("data/train/images", "data/train/annotations")
+        self.export("data")
         self.preview()
 
 
@@ -228,9 +237,15 @@ class PositionAnnotation:
         ffmpeg.stop()
 
 
-    def export(self, images_out_path: str, annotation_out_path: str):
-        os.makedirs(images_out_path, exist_ok=True)
-        os.makedirs(annotation_out_path, exist_ok=True)
+    def export(self, out_path, train_test_split=0.9, min_expot_distance=5.0):
+        train_images_out_path = os.path.join(out_path, "train", "images")
+        train_annotation_out_path = os.path.join(out_path, "train", "annotation")
+        test_images_out_path = os.path.join(out_path, "test", "images")
+        test_annotation_out_path = os.path.join(out_path, "test", "annotation")
+        os.makedirs(train_images_out_path, exist_ok=True)
+        os.makedirs(train_annotation_out_path, exist_ok=True)
+        os.makedirs(test_images_out_path, exist_ok=True)
+        os.makedirs(test_annotation_out_path, exist_ok=True)
         filename_prefix = '.'.join(os.path.basename(self.video_file).split('.')[:-1])
 
         ffmpeg = FFmpegStream(
@@ -240,11 +255,23 @@ class PositionAnnotation:
                 start_frame = 0
             )
 
-        frame_number = 0
+        annotation_out_path = train_annotation_out_path
+        images_out_path = train_images_out_path
+        flip_output = round(train_test_split * len(self.annotation["keypoints"]) + 1)
+        frame_number = -1
         while ffmpeg.isOpen():
+            frame_number += 1
             frame = ffmpeg.read()
             if frame_number >= len(self.annotation["keypoints"]):
                 break
+
+            if frame_number > flip_output:
+                images_out_path = test_images_out_path
+                annotation_out_path = test_annotation_out_path
+            else:
+                if self.annotation["distances"][frame_number] < min_expot_distance:
+                    print("distance", self.annotation["distances"][frame_number], "to smal, skip")
+                    continue
 
             name = filename_prefix + "_" + str(frame_number).zfill(8)
             print("export", name)
@@ -253,7 +280,6 @@ class PositionAnnotation:
 
             cv2.imwrite(os.path.join(images_out_path, name + ".jpg"), frame)
 
-            frame_number += 1
 
 
         ffmpeg.stop()
