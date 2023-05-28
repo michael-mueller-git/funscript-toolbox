@@ -851,7 +851,8 @@ class OpenCV_GUI(KeypressHandler):
         new_position = copy.deepcopy(start_point)
         accept = False
         self.clear_keypress_queue()
-        time.sleep(0.1)
+        time.sleep(0.5)
+        self.clear_keypress_queue()
         while not accept:
             if parameter_changed:
                 parameter_changed = False
@@ -885,3 +886,81 @@ class OpenCV_GUI(KeypressHandler):
 
         return (start_point[0] - new_position[0], start_point[1] - new_position[1])
 
+
+    def get_rectangle_offset(self, frame, rectangle) -> tuple:
+        """ Get an offset value for an start point by user input
+
+        Args:
+            frame (np.ndarray): frame
+            rectangle (tuple): rectangle in format (x1,y,x2,y2)
+
+        Returns:
+            tuple: rectangle (x1,y,x2,y2)
+        """
+        parameter_changed= True
+        new_position = copy.deepcopy(rectangle)
+        accept = False
+        self.clear_keypress_queue()
+        time.sleep(0.1)
+        point = 1
+        while not accept:
+            if parameter_changed:
+                parameter_changed = False
+                preview = copy.deepcopy(frame)
+                boxes = [(new_position[0], new_position[1], new_position[2]-new_position[0], new_position[3]-new_position[1])]
+                preview= self.draw_box_to_image(preview, boxes)
+                if point == 1:
+                    preview = self.draw_point_to_image(preview, (new_position[0], new_position[1]))
+                else:
+                    preview = self.draw_point_to_image(preview, (new_position[2], new_position[3]))
+                self.set_background_image(preview)
+                self.print_text("Press space to confirm", color=(0,0,255))
+
+            ret = self.show()
+            if ret in [ord(' '), 13]:
+                point += 1
+                parameter_changed = True
+                self.clear_keypress_queue()
+                time.sleep(0.5)
+                self.clear_keypress_queue()
+                if point > 2:
+                    break
+
+            while self.keypress_queue.qsize() > 0:
+                pressed_key = '{0}'.format(self.keypress_queue.get())
+                if pressed_key == "Key.space" or pressed_key == "Key.enter":
+                    point += 1
+                    parameter_changed = True
+                    self.clear_keypress_queue()
+                    time.sleep(0.5)
+                    self.clear_keypress_queue()
+                    if point > 2:
+                        accept = True
+                        break
+
+                if pressed_key == "'w'":
+                    parameter_changed = True
+                    if point == 1:
+                        new_position = (new_position[0], new_position[1]-5, new_position[2], new_position[3])
+                    else:
+                        new_position = (new_position[0], new_position[1], new_position[2], new_position[3]-5)
+                elif pressed_key == "'a'":
+                    parameter_changed = True
+                    if point == 1:
+                        new_position = (new_position[0]-5, new_position[1], new_position[2], new_position[3])
+                    else:
+                        new_position = (new_position[0], new_position[1], new_position[2]-5, new_position[3])
+                elif pressed_key == "'s'":
+                    parameter_changed = True
+                    if point == 1:
+                        new_position = (new_position[0], new_position[1]+5, new_position[2], new_position[3])
+                    else:
+                        new_position = (new_position[0], new_position[1], new_position[2], new_position[3]+5)
+                elif pressed_key == "'d'":
+                    parameter_changed = True
+                    if point == 1:
+                        new_position = (new_position[0]+5, new_position[1], new_position[2], new_position[3])
+                    else:
+                        new_position = (new_position[0], new_position[1], new_position[2]+5, new_position[3])
+
+        return (new_position[0] - rectangle[0], new_position[1] - rectangle[1], new_position[2] - rectangle[2], new_position[3] - rectangle[3])

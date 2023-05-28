@@ -168,9 +168,25 @@ class PositionAnnotation:
                     real_positions[idx][1][1] = real_positions[idx][0][1]
 
         dick_len = max((abs(point_distances[max_distance_frame_number]), 12))
-        approx_dick_thick = round(0.12 * dick_len + 1)
+        approx_dick_thick = round(0.2 * dick_len + 1)
 
-        bboxes =  [[[min((x[0][0], x[1][0]))-approx_dick_thick, min((x[0][1], x[1][1]))-8, max((x[0][0], x[1][0]))+approx_dick_thick, max((x[0][1], x[1][1]))+8]] for x in real_positions]
+        preview_frame = FFmpegStream.get_frame(self.video_file, max_distance_frame_number)
+        preview_frame = FFmpegStream.get_projection(preview_frame, self.annotation["ffmpeg"])
+        rectangle_offset = self.ui.get_rectangle_offset(preview_frame,
+                                (
+                                   min((real_positions[max_distance_frame_number][0][0], real_positions[max_distance_frame_number][1][0]))-approx_dick_thick,
+                                   min((real_positions[max_distance_frame_number][0][1], real_positions[max_distance_frame_number][1][1]))-8,
+                                   max((real_positions[max_distance_frame_number][0][0], real_positions[max_distance_frame_number][1][0]))+approx_dick_thick,
+                                   max((real_positions[max_distance_frame_number][0][1], real_positions[max_distance_frame_number][1][1]))+8
+                                )
+                            )
+
+        bboxes =  [[[
+            min((x[0][0], x[1][0])) - approx_dick_thick + rectangle_offset[0],
+            min((x[0][1], x[1][1])) - 8 + rectangle_offset[1],
+            max((x[0][0], x[1][0])) + approx_dick_thick + rectangle_offset[2],
+            max((x[0][1], x[1][1])) + 8 + rectangle_offset[3]
+            ]] for x in real_positions]
 
         self.annotation["bboxes"] = bboxes
         self.annotation["keypoints"] = [[[x[0][0], x[0][1], 1], [x[1][0], x[1][1], 1]] for x in real_positions]
