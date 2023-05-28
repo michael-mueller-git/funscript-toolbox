@@ -175,7 +175,7 @@ class PositionAnnotation:
         self.annotation["bboxes"] = bboxes
         self.annotation["keypoints"] = [[[x[0][0], x[0][1], 1], [x[1][0], x[1][1], 1]] for x in real_positions]
         self.save_annotation()
-        self.export("data/images", "data/annotations")
+        self.export("data/train/images", "data/train/annotations")
         self.preview()
 
 
