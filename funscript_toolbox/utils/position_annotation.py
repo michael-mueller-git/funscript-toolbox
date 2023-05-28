@@ -240,9 +240,9 @@ class PositionAnnotation:
 
     def export(self, out_path, train_test_split=0.9, min_expot_distance=5.0):
         train_images_out_path = os.path.join(out_path, "train", "images")
-        train_annotation_out_path = os.path.join(out_path, "train", "annotation")
+        train_annotation_out_path = os.path.join(out_path, "train", "annotations")
         test_images_out_path = os.path.join(out_path, "test", "images")
-        test_annotation_out_path = os.path.join(out_path, "test", "annotation")
+        test_annotation_out_path = os.path.join(out_path, "test", "annotations")
         os.makedirs(train_images_out_path, exist_ok=True)
         os.makedirs(train_annotation_out_path, exist_ok=True)
         os.makedirs(test_images_out_path, exist_ok=True)
