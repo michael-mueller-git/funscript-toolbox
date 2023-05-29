@@ -6,6 +6,7 @@ import sys
 import time
 import logging
 import argparse
+import shutil
 
 import numpy as np
 
@@ -59,7 +60,10 @@ class PositionAnnotation:
 
 
     def get_tracker(self, first_frame):
-        selection = self.ui.menu(["1 Point", "2 Points"])
+        selection = self.ui.menu(["1 Point", "2 Points", "Exit"])
+
+        if selection == 3:
+            sys.exit()
 
         preview_frame = copy.deepcopy(first_frame)
         bbox_top = self.ui.bbox_selector(
@@ -98,8 +102,11 @@ class PositionAnnotation:
 
 
     def start(self):
+        print(self.video_file)
         if len (self.annotation["keypoints"]) > 0:
             self.logger.info("preview existing labels")
+            shutil.move(self.video_file, self.video_file.replace('videos', 'videos_done'))
+            shutil.move(''.join(self.video_file[:-4]) + ".json", str(''.join(self.video_file[:-4]) + ".json").replace('videos', 'videos_done'))
             # self.preview()
             return
 
@@ -140,12 +147,22 @@ class PositionAnnotation:
 
         ffmpeg.stop()
 
-        point_distances = np.array([np.sqrt(np.sum((np.array(item[0][4:]) - np.array(item[1][4:])) ** 2, axis=0)) \
-                    for item in tracking_result])
+        # point_distances = np.array([np.sqrt(np.sum((np.array(item[0][4:]) - np.array(item[1][4:])) ** 2, axis=0)) \
+                    # for item in tracking_result])
+        point_distances = [abs(float(item[0][5] - item[1][5])) for item in tracking_result]
 
         max_distance_frame_number = np.argmax(np.array([abs(x) for x in point_distances]))
 
-        selection = self.ui.menu(["Apply Offset by Dick Points", "Apply manual offset", "No Offset", "Discard"])
+        selection = self.ui.menu(["OK", "Retry", "Exit"])
+        if selection == 3:
+            return
+
+        if selection == 2:
+            self.start()
+            return
+
+        # selection = self.ui.menu(["Apply Offset by Dick Points", "Apply manual offset", "No Offset", "Discard"])
+        selection = 2
 
         if selection == 1:
             dick_pos = self.get_dick_pos(max_distance_frame_number)
@@ -162,7 +179,8 @@ class PositionAnnotation:
             self.logger.warning("Discard new labels")
             return
 
-        selection = self.ui.menu(["Apply Y Correction", "No Correction"])
+        # selection = self.ui.menu(["Apply Y Correction", "No Correction"])
+        selection = 1
         if selection == 1:
             for idx in range(len(real_positions)):
                 if real_positions[idx][0][1] > real_positions[idx][1][1]:
@@ -189,16 +207,22 @@ class PositionAnnotation:
             max((x[0][1], x[1][1])) + 8 + rectangle_offset[3]
             ]] for x in real_positions]
 
-        point_distances = [float(np.sqrt(np.sum((np.array(item[0]) - np.array(item[1])) ** 2, axis=0))) \
-                    for item in real_positions]
+        point_distances = [abs(float(item[0][1] - item[1][1])) for item in real_positions]
 
         self.annotation["bboxes"] = bboxes
         self.annotation["keypoints"] = [[[x[0][0], x[0][1], 1], [x[1][0], x[1][1], 1]] for x in real_positions]
         self.annotation["distances"] = point_distances
         self.preview()
 
-        selection = self.ui.menu(["Save and Export", "Exit"])
+        selection = self.ui.menu(["Save and Export", "Retry", "Exit"])
+        if selection == 3:
+            return
+
         if selection == 2:
+            self.annotation["bboxes"] = []
+            self.annotation["keypoints"] = []
+            self.annotation["distances"] = []
+            self.start()
             return
 
         self.save_annotation()
@@ -284,6 +308,10 @@ class PositionAnnotation:
 
 
         ffmpeg.stop()
+
+        shutil.move(self.video_file, self.video_file.replace('videos', 'videos_done'))
+        shutil.move(''.join(self.video_file[:-4]) + ".json", str(''.join(self.video_file[:-4]) + ".json").replace('videos', 'videos_done'))
+
 
 
     def get_dick_pos(self, max_distance_frame_number: int) -> dict:

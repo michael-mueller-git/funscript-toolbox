@@ -862,9 +862,9 @@ class OpenCV_GUI(KeypressHandler):
                 self.print_text("Press space to confirm", color=(0,0,255))
 
             ret = self.show()
-            if ret in [ord(' '), 13]:
-                print("accept #1")
-                break
+            # if ret in [ord(' '), 13]:
+            #     print("accept #1")
+            #     break
 
             while self.keypress_queue.qsize() > 0:
                 pressed_key = '{0}'.format(self.keypress_queue.get())
@@ -919,15 +919,15 @@ class OpenCV_GUI(KeypressHandler):
                 self.print_text("Press space to confirm", color=(0,0,255))
 
             ret = self.show()
-            if ret in [ord(' '), 13]:
-                print("accept #1")
-                point += 1
-                parameter_changed = True
-                self.clear_keypress_queue()
-                time.sleep(0.5)
-                self.clear_keypress_queue()
-                if point > 2:
-                    break
+            # if ret in [ord(' '), 13]:
+            #     print("accept #1")
+            #     point += 1
+            #     parameter_changed = True
+            #     self.clear_keypress_queue()
+            #     time.sleep(0.5)
+            #     self.clear_keypress_queue()
+            #     if point > 2:
+            #         break
 
             while self.keypress_queue.qsize() > 0:
                 pressed_key = '{0}'.format(self.keypress_queue.get())
