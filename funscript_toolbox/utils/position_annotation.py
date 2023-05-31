@@ -290,6 +290,9 @@ class PositionAnnotation:
             if frame_number >= len(self.annotation["keypoints"]):
                 break
 
+            if frame_number % 2 == 0:
+                continue
+
             if frame_number > flip_output:
                 images_out_path = test_images_out_path
                 annotation_out_path = test_annotation_out_path
