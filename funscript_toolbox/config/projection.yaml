@@ -12,8 +12,8 @@ vr_he_180_sbs:
   name: '3D SBS VR Video 180'
   video_filter: 'v360=input=he:in_stereo=sbs:pitch=${pitch}:yaw=${yaw}:roll=${roll}:output=flat:d_fov=${fov}:w=${width}:h=${height}'
   parameter:
-    height: 800
-    width: 800
+    height: 512
+    width: 512
     fov: 80
     pitch: -45
     yaw: 0
