@@ -661,12 +661,13 @@ class OpenCV_GUI(KeypressHandler):
         return bbox
 
 
-    def get_video_projection_config(self, image :np.ndarray, projection: str) -> dict:
+    def get_video_projection_config(self, image :np.ndarray, projection: str, show_keys: bool = True) -> dict:
         """ Get the video projection config form user input
 
         Args:
             image (np.ndarray): opencv vr 180 or 360 image
             projection (str): projection key from config
+            show_keys (bool): show key shortcuts
 
         Returns:
             dict: projection config
@@ -721,10 +722,11 @@ class OpenCV_GUI(KeypressHandler):
                     parameter_changed = False
                     preview = FFmpegStream.get_projection(image, config)
                     self.set_background_image(preview)
-                    self.print_text("Press 'space' to use current viewpoint")
-                    self.print_text("Press '0' (NULL) to reset view")
-                    final_ui_texte = [ui_texte[k].replace('${val}', str(config['parameter'][k])) for k in ui_texte.keys()]
-                    self.print_text(final_ui_texte)
+                    if show_keys:
+                        self.print_text("Press 'space' to use current viewpoint")
+                        self.print_text("Press '0' (NULL) to reset view")
+                        final_ui_texte = [ui_texte[k].replace('${val}', str(config['parameter'][k])) for k in ui_texte.keys()]
+                        self.print_text(final_ui_texte)
 
                 ret = self.show()
                 if ret in [ord(' '), 13]:
