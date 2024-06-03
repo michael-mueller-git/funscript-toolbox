@@ -56,6 +56,54 @@ vr_he_180_sbs_lr:
       increase: "-"
       decrease: "+"
 
+vr_fisheye_180_sbs:
+  name: '3D SBS VR Video Fisheye 180'
+  video_filter: 'v360=input=fisheye:in_stereo=sbs:id_fov=180:pitch=${pitch}:yaw=${yaw}:roll=${roll}:output=flat:d_fov=${fov}:w=${width}:h=${height}'
+  parameter:
+    height: 800
+    width: 800
+    fov: 80
+    pitch: -45
+    yaw: 0
+    roll: 0
+  keys:
+    pitch:
+      increase: "w"
+      decrease: "s"
+    yaw:
+      increase: "d"
+      decrease: "a"
+    roll:
+      increase: "e"
+      decrease: "q"
+    fov:
+      increase: "-"
+      decrease: "+"
+
+vr_fisheye_190_sbs:
+  name: '3D SBS VR Video Fisheye 190'
+  video_filter: 'v360=input=fisheye:in_stereo=sbs:id_fov=190:pitch=${pitch}:yaw=${yaw}:roll=${roll}:output=flat:d_fov=${fov}:w=${width}:h=${height}'
+  parameter:
+    height: 800
+    width: 800
+    fov: 80
+    pitch: -45
+    yaw: 0
+    roll: 0
+  keys:
+    pitch:
+      increase: "w"
+      decrease: "s"
+    yaw:
+      increase: "d"
+      decrease: "a"
+    roll:
+      increase: "e"
+      decrease: "q"
+    fov:
+      increase: "-"
+      decrease: "+"
+
 vr_fisheye_200_sbs:
   name: '3D SBS VR Video Fisheye 200'
   video_filter: 'v360=input=fisheye:in_stereo=sbs:id_fov=200:pitch=${pitch}:yaw=${yaw}:roll=${roll}:output=flat:d_fov=${fov}:w=${width}:h=${height}'
