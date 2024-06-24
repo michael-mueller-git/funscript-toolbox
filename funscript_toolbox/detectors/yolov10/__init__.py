@@ -8,18 +8,17 @@ from onnxruntime.capi import _pybind_state as C
 class YOLOv10:
     """YOLOv10 object detection model class for handling inference and visualization."""
 
-    def __init__(self, confidence_thres = 0.4):
+    def __init__(self, path=None, confidence_thres = 0.5):
         """
         Initializes an instance of the YOLOv10 class.
 
         Args:
-            onnx_model: Path to the ONNX model.
-            input_image: Path to the input image.
+            path: Path to the ONNX model.
             confidence_thres: Confidence threshold for filtering detections.
         """
         self.confidence_thres = confidence_thres
         self.session = ort.InferenceSession(
-            os.path.join(os.path.dirname(__file__), "best.onnx"), 
+            os.path.join(os.path.dirname(__file__), "best.onnx") if path is None else path, 
             providers=C.get_available_providers()
         )
         
