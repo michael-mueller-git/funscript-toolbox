@@ -661,19 +661,23 @@ class OpenCV_GUI(KeypressHandler):
         return bbox
 
 
-    def get_video_projection_config(self, image :np.ndarray, projection: str, show_keys: bool = True) -> dict:
+    def get_video_projection_config(self, image :np.ndarray, projection: str, show_keys: bool = True, overrides: dict = {}) -> dict:
         """ Get the video projection config form user input
 
         Args:
             image (np.ndarray): opencv vr 180 or 360 image
             projection (str): projection key from config
             show_keys (bool): show key shortcuts
+            overrides (dict): override default parameter
 
         Returns:
             dict: projection config
         """
         assert projection in self.projection_config.keys()
         config = copy.deepcopy(self.projection_config[projection])
+
+        for k in overrides:
+            config['parameter'][k] = overrides[k]
 
         h, w = image.shape[:2]
         if self.projection_config[projection]['parameter']['height'] == -1:
