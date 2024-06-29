@@ -102,10 +102,10 @@ class YoloFace:
             for bounding_box in bounding_box_raw:
                 bounding_box_list.append(np.array(
                 [
-                    (bounding_box[0] - bounding_box[2] / 2) * ratio_width,
-                    (bounding_box[1] - bounding_box[3] / 2) * ratio_height,
-                    (bounding_box[0] + bounding_box[2] / 2) * ratio_width,
-                    (bounding_box[1] + bounding_box[3] / 2) * ratio_height
+                    round((bounding_box[0] - bounding_box[2] / 2) * ratio_width),
+                    round((bounding_box[1] - bounding_box[3] / 2) * ratio_height),
+                    round((bounding_box[0] + bounding_box[2] / 2) * ratio_width),
+                    round((bounding_box[1] + bounding_box[3] / 2) * ratio_height)
                 ]))
             face_landmark_5_raw[:, 0::3] = (face_landmark_5_raw[:, 0::3]) * ratio_width
             face_landmark_5_raw[:, 1::3] = (face_landmark_5_raw[:, 1::3]) * ratio_height
