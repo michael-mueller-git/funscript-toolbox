@@ -44,6 +44,15 @@ class YOLOv10:
         """
         x1, y1, w, h = box
         cv2.rectangle(img, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (255,0,0), 2)
+        cv2.putText(
+            img,
+            "c"+str(class_id) + " " +  str(round(score*100)) + "%",
+            (x1, y1),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.75,
+            (0,0,255),
+            2
+        )
 
     def preprocess(self, image_path):
         """
